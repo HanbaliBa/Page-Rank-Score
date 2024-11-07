@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Page Rank Score Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='Css/last.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.0/cytoscape.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            align-items: start;
+        }
+        .panel {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .panel_v{
+            width: 500px;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .file-input, .text-input, .graph-input {
+            display: none;
+        }
+        #cy {
+            width: 300px;
+            height: 300px;
+            border: 1px solid #ddd;
+            overflow: hidden;
+        }
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .matrix-output {
+            margin-top: 10px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .center-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .matrix-table td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+    </style>
+    <script>
+        let cy;
+        const historyStack = []; // Stack to store history of added nodes and edges
+
+        function toggleInput() {
+            const type = document.querySelector('select[name="type"]').value;
+            document.querySelector('.file-input').style.display = type === 'XML' ? 'block' : 'none';
+            document.querySelector('.text-input').style.display = type === 'adjacencyMatrix' ? 'block' : 'none';
+            document.querySelector('.graph-input').style.display = type === 'graph' ? 'block' : 'none';
+            document.querySelector('.file').style.display = type === 'No' ? 'block' : 'none';
+
+            if (type === 'graph' && !cy) {
+                initializeCytoscape();
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    document.getElementById('xmltext').value = content; // Set the content in textarea
+                };
+                reader.readAsText(file); // Read the file as text
+            }
+        }
+
+        function initializeCytoscape() {
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#007bff',
+                            'label': 'data(id)'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#333',
+                            'target-arrow-color': '#333',
+                            'target-arrow-shape': 'triangle',
+                            'target-arrow-color': '#ccc',
+                            'source-arrow-color': '#ccc'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'grid'
+                }
+            });
+        }
+
+        function addNode() {
+            const nodeId = `n${cy.nodes().length + 1}`;
+            const node = cy.add({ group: 'nodes', data: { id: nodeId }, position: { x: Math.random() * 200, y: Math.random() * 200 } });
+            historyStack.push(node); // Add the node to history for undo functionality
+        }
+
+        function addEdge() {
+            const source = prompt("Enter source node ID:");
+            const target = prompt("Enter target node ID:");
+            if (source && target && cy.getElementById(source).length && cy.getElementById(target).length) {
+                const edge = cy.add({ group: 'edges', data: { source: source, target: target } });
+                historyStack.push(edge); // Add the edge to history for undo functionality
+            } else {
+                alert("Invalid node IDs!");
+            }
+        }
+
+        function undoLastAction() {
+            const lastElement = historyStack.pop(); // Get the last added element
+            if (lastElement) {
+                lastElement.remove(); // Remove the last element if it exists
+            } else {
+                alert("Nothing to undo!");
+            }
+        }
+
+        
+        function submitForm() {
+
+            const selectedType = document.getElementById('type').value;
+
+            if (selectedType === "graph") {
+                // If "Draw Graph" is selected, prepare and submit the graph data
+                const nodes = cy.nodes().map(node => node.id());
+                const edges = cy.edges().map(edge => ({
+                    source: edge.source().id(),
+                    target: edge.target().id()
+                }));
+                document.getElementById('defaultinput').value = JSON.stringify({ nodes, edges });
+                document.getElementById('mainForm').submit();
+            } else if (selectedType === "adjacencyMatrix") {
+                // If "Adjacency Matrix" is selected, check if the matrix is generated
+                const matrixContainer = document.getElementById('matrixContainer');
+                const rows = matrixContainer.getElementsByTagName('tr');
+
+                // Check if there are any rows in the matrix container (excluding the header row, if present)
+                if (rows.length > 1) {  // Assuming the first row is a header, so we check for >1 rows
+                    // If a matrix is generated, read matrix data from the table and populate defaultinput
+                    const matrix = Array.from(rows).map(row => 
+                        Array.from(row.getElementsByTagName('td')).map(cell => parseInt(cell.textContent))
+                    );
+                    document.getElementById('defaultinput').value = JSON.stringify({ matrix });
+                    document.getElementById('mainForm').submit();
+                } else {
+                    // If no matrix is generated, prompt the user to generate one
+                    alert("Please Specify Node Count.");
+                }
+            }
+
+            
+            // if (selectedType === "adjacencyMatrix") {
+            //     // If "Adjacency Matrix" is selected, read matrix data from the table and populate defaultinput
+            //     const matrixContainer = document.getElementById('matrixContainer');
+            //     const rows = matrixContainer.getElementsByTagName('tr');
+            //     const matrix = Array.from(rows).map(row => 
+            //         Array.from(row.getElementsByTagName('td')).map(cell => parseInt(cell.textContent))
+            //     );
+            //     document.getElementById('defaultinput').value = JSON.stringify({ matrix });
+            //     document.getElementById('mainForm').submit();
+            // }
+
+        }
+
+
+       
+
+        function promptForMatrix() {
+            const nodeCount = parseInt(prompt("Enter the number of nodes:"), 10);
+            if (isNaN(nodeCount) || nodeCount <= 1) {
+                alert("Please enter a valid number of nodes.");
+                return;
+            }
+            generateMatrix(nodeCount);
+        } 
+
+
+        function generateMatrix(size) {
+            const matrixTable = document.createElement('table');
+            matrixTable.classList.add('matrix-table');
+            for (let i = 0; i < size; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < size; j++) {
+                    
+                    const cell = document.createElement('td');
+                    cell.textContent = "0";
+                    cell.onclick = function() {
+                        this.textContent = this.textContent === "0" ? "1" : "0";  
+                    };
+                   
+                    row.appendChild(cell);
+                }
+                matrixTable.appendChild(row);
+            }
+            const matrixContainer = document.getElementById('matrixContainer');
+            matrixContainer.innerHTML = '';  
+            matrixContainer.appendChild(matrixTable);
+        }
+        
+    </script>
+
+</head>
+<body>
+
+    <h1>Page Rank Score Calculator</h1>
+    <form id="mainForm" method="POST" action="/">
+        <div class="container">
+            <!-- Left Panel: Input area -->
+            <div class="panel">
+                <label for="type">Select Input Type:</label>
+                <select name="type" id="type" onchange="toggleInput()">
+                    <option value="No">--Select--</option>
+                    <option value="XML" >XML File</option>
+                    <option value="graph" >Draw Graph</option>
+                    <option value="adjacencyMatrix">Adjacency Matrix</option>
+                </select>
+
+                <div class="file" >
+                    <textarea id="defaultinput" name="defaultinput"  rows="10" cols="30" placeholder="selcte type...">{{text1}}</textarea> 
+                </div>
+
+                <!-- File input for XML files -->
+                <div class="file-input" id="fileInputContainer">
+                    <label for="fileInput">Upload XML File:</label>
+                    <input type="file" name="fileInput" id="fileInput" accept=".xml" onchange="handleFileUpload(event)" />
+                    <textarea name="xmltext" id="xmltext" rows="10" cols="30" placeholder="File content will appear here..." required>{{text1}}</textarea> 
+                </div>
+
+                <!-- Graph drawing area -->
+                <div class="graph-input">
+                    <label>Draw Your Graph:</label>
+                    <div id="cy"></div>
+                    <div class="controls">
+                        <button type="button" onclick="addNode()">Add Node</button>
+                        <button type="button" onclick="addEdge()">Add Edge</button>
+                        <button type="button" onclick="undoLastAction()">Undo Last Action</button>
+                    </div>
+                </div>
+
+                <!-- Matrix input generation for Adjacency Matrix -->
+                <div class="text-input">
+                    <label for="nodeCount">Set Adjacency Matrix Size:</label>
+                    <button type="button" onclick="promptForMatrix()">Specify Node Count</button>
+                    <div id="matrixContainer" class="matrix-output"></div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Calculate Button -->
+            <div class="center-panel">
+                <input type="submit" value="Calculate" onclick="submitForm()" />
+                <!-- <input type="hidden" id="graphData" name="graphData" /> -->
+                <!-- <input type="submit" value="Calculate" /> -->
+            </div>
+            
+            {%if file_path == 'error_graph' %}
+                <div class="panel_v">
+                    <h2 style="color:#ea1212;">Please Draw Your Graph.</h2>    
+                </div>
+            {% elif file_path == 'error' %}
+                <div class="panel_v">
+                    <h3 style="color:#ea1212;">Make sure to use the following XML format</h3>
+                    <p>&lt;?xml version="1.0" encoding="UTF-8"?&gt;<br>
+                        &lt;graph&gt;
+                        <pre style="color:#3ef751;">&nbsp;&nbsp;&lt;!-- nœuds Representation --&gt;</pre>
+                        &nbsp;&nbsp;&lt;nodes&gt;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&lt;node id="1" label="Node 1" /&gt;<br>
+                        &nbsp;&nbsp;&lt;/nodes&gt;
+                        <pre style="color:#3ef751;">&nbsp;&nbsp;&lt;!-- Edges representation --&gt;</pre>
+                        &nbsp;&nbsp;&lt;edges&gt;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&lt;edge source="1" target="2" /&gt;<br>
+                        &nbsp;&nbsp;&lt;/edges&gt;<br>
+                        &lt;/graph&gt;</p>
+                </div>
+            {% elif file_path %}
+            <div class="panel_v">
+                <h3>Network Graph Visualization</h3>
+                <iframe src="{{ file_path }}" width="100%" height="600px" style="border:1px solid #ddd;">
+                    Your browser does not support iframes.
+                </iframe>
+            </div>
+            {% else %}
+            <div class="panel">
+                <h3>No network graph available. Please generate one first.</h3>
+            </div> 
+            {% endif %}
+        </div>
+    </form>
+</body>
+</html>

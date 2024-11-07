@@ -1,0 +1,201 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 32px;
+    color: #686666;
+    margin-bottom: 20px;
+}
+
+/* Container Styling */
+.container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    width: 90%;
+    max-width: 1200px;
+    margin-top: 20px;
+}
+
+/* Panels Styling */
+.panel, .panel_v {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.panel_v {
+    width: 100%;
+    max-width: 800px;
+}
+
+h3, h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.panel_v h2 {
+    color: #ea1212;
+}
+
+/* Select Input and Buttons */
+select, input[type="submit"], button {
+    background-color: #4a4747;
+    color: white;
+    font-size: 14px;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+select:focus, input[type="submit"]:focus, button:focus {
+    outline: none;
+    box-shadow: 0 0 5px #693939;
+}
+
+button {
+    margin: 5px;
+}
+
+input[type="submit"] {
+    width: 200px;
+    margin-top: 20px;
+}
+
+input[type="file"], input[type="text"], textarea {
+    font-size: 14px;
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+input[type="file"] {
+    background-color: #f1f1f1;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.textarea-style {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    width: 100%;
+    padding: 10px;
+}
+
+/* File Upload Styles */
+.file-input, .text-input, .graph-input {
+    display: none;
+}
+
+/* Matrix Table Styling */
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.matrix-table td {
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #ddd;
+}
+
+.matrix-table td:hover {
+    background-color: #e0e0e0;
+}
+
+.matrix-output {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Graph Area */
+#cy {
+    width: 100%;
+    height: 400px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+/* File and Graph Display */
+iframe {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+.controls {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Centered Panel */
+.center-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Input Areas */
+.text-input, .graph-input, .file-input {
+    margin-top: 20px;
+}
+
+/* Error Message Styling */
+.error-message {
+    color: #ea1212;
+    font-size: 16px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .panel {
+        width: 100%;
+        padding: 15px;
+    }
+
+    #cy {
+        width: 100%;
+        height: 300px;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
