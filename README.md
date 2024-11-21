@@ -16,6 +16,6 @@ This project implements the **PageRank** algorithm and provides a web interface 
 - **Python 3.x**
 
 ## Visualisation
-<a href="https://page-rank-score-4skr.onrender.com/" target="_blank">**Click Me**</a>
+<a href="https://page-rank-score-4skr.onrender.com/" target="blank">**Click Me**</a>
 
 
