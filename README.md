@@ -15,9 +15,7 @@ This project implements the **PageRank** algorithm and provides a web interface 
 - **Cytoscape.js**: A JavaScript library used for graph visualization.
 - **Python 3.x**
 
-## Installation
+## Visualisation
+[Go to](https://page-rank-score-4skr.onrender.com/)
 
-### Prerequisites
 
-- Python 3.x
-- pip (Python package installer)
